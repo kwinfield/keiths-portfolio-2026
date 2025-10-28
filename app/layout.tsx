@@ -5,6 +5,8 @@ import { Inter } from 'next/font/google'
 import Script from 'next/script'
 import { Suspense } from 'react'           // ← add this
 import AnalyticsListener from './analytics-listener'
+import SiteHeader from '@/components/site-header'
+import SiteFooter from '@/components/site-footer'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -17,28 +19,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={inter.className}>
-        {children}
+        <SiteHeader />
+        <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
+        <SiteFooter />
 
-        {/* GA4 loader */}
-        <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
-          strategy="afterInteractive"
-        />
-        <Script id="ga-init" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', {
-              page_path: window.location.pathname,
-            });
-          `}
-        </Script>
-
-        {/* Wrap hooks in Suspense to satisfy CSR bailout on 404/_not-found */}
-        <Suspense fallback={null}>
-          <AnalyticsListener />
-        </Suspense>
+        {/* keep your GA <Script> tags and <Suspense><AnalyticsListener/></Suspense> here */}
       </body>
     </html>
   )

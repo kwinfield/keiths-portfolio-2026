@@ -26,3 +26,12 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+html { color-scheme: light dark; }
+body { background: var(--bg); }
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0a0a0a; }
+  body { color: #e5e5e5; }
+}
+.prose :where(a){ text-decoration: underline; }
+
