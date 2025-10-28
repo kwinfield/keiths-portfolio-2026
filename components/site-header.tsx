@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
+import ThemeToggle from './theme-toggle'
 
 const links = [
   { href: '/', label: 'Home' },
@@ -35,6 +36,10 @@ export default function SiteHeader() {
             </Link>
           ))}
         </nav>
+        <div className="flex items-center gap-3">
+          <nav className={`md:flex gap-4 ${open ? 'block' : 'hidden'} md:block`}> ... </nav>
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   )

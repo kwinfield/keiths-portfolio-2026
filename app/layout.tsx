@@ -7,8 +7,9 @@ import { Suspense } from 'react'           // ← add this
 import AnalyticsListener from './analytics-listener'
 import SiteHeader from '@/components/site-header'
 import SiteFooter from '@/components/site-footer'
+import ThemeProvider from '@/components/theme-provider'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
 export const metadata: Metadata = {
   title: 'Keejay Portfolio',
@@ -18,12 +19,13 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <SiteHeader />
-        <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
-        <SiteFooter />
-
-        {/* keep your GA <Script> tags and <Suspense><AnalyticsListener/></Suspense> here */}
+      <body className={`${inter.variable} font-sans`}>
+        <ThemeProvider>
+          <SiteHeader />
+          <main className="container py-8">{children}</main>
+          <SiteFooter />
+          {/* GA scripts + <Suspense><AnalyticsListener/></Suspense> as-is */}
+        </ThemeProvider>
       </body>
     </html>
   )
