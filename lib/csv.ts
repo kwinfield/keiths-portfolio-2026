@@ -1,6 +1,7 @@
 // lib/csv.ts
 import { nanoid } from 'nanoid'
 import { locationSchema, type Location } from './location-types'
+import type { LeadRow } from './utm'
 
 /** Escape a CSV field (RFC 4180-ish) */
 function csvEscape(value: string | number | null | undefined): string {
@@ -231,4 +232,24 @@ export function downloadImportTemplate() {
   ]
   const csv = toCSV(headers, rows)
   downloadCsv('import-template-google-like.csv', csv)
+}
+
+export function exportLeadsCSV(rows: LeadRow[]) {
+  const headers = ['createdAt','email','name','utm_source','utm_medium','utm_campaign','utm_term','utm_content']
+  const body = rows.map(r => [
+    r.createdAt, r.email, r.name ?? '',
+    r.utm.source ?? '', r.utm.medium ?? '', r.utm.campaign ?? '', r.utm.term ?? '', r.utm.content ?? ''
+  ])
+  const head = headers.join(',')
+  const b = body.map(r => r.map(v => {
+    const s = (v ?? '').toString()
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s
+  }).join(',')).join('\n')
+  const csv = '\ufeff' + head + '\n' + b + '\n'
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url; a.download = 'leads.csv'
+  document.body.appendChild(a); a.click(); document.body.removeChild(a)
+  URL.revokeObjectURL(url)
 }
