@@ -106,3 +106,110 @@ export function exportAppleCSV(list: Location[]) {
   const csv = toCSV(headers, rows)
   downloadCsv(`apple-business-connect.csv`, csv)
 }
+
+// --- beneath exportAppleCSV(...) ---
+
+export function parseCSV(raw: string): string[][] {
+  const rows: string[][] = []
+  let i = 0, field = '', row: string[] = [], inQuotes = false
+
+  function endField() { row.push(field); field = '' }
+  function endRow() { rows.push(row); row = [] }
+
+  while (i < raw.length) {
+    const c = raw[i]
+    if (inQuotes) {
+      if (c === '"') {
+        if (raw[i+1] === '"') { field += '"'; i += 2; continue } // escaped quote
+        inQuotes = false; i++; continue
+      }
+      field += c; i++; continue
+    } else {
+      if (c === '"') { inQuotes = true; i++; continue }
+      if (c === ',') { endField(); i++; continue }
+      if (c === '\r') { i++; continue }
+      if (c === '\n') { endField(); endRow(); i++; continue }
+      field += c; i++; continue
+    }
+  }
+  // tail
+  endField(); endRow()
+  // trim BOM
+  if (rows[0] && rows[0][0] && rows[0][0].charCodeAt(0) === 0xFEFF) {
+    rows[0][0] = rows[0][0].slice(1)
+  }
+  return rows
+}
+
+export type ParsedCsv = { headers: string[], rows: string[][] }
+
+export function parseCsvWithHeader(raw: string): ParsedCsv {
+  const all = parseCSV(raw)
+  const [head, ...body] = all.filter(r => r.length && r.some(v => v !== ''))
+  return { headers: head ?? [], rows: body }
+}
+
+// --- MAPPERS: CSV -> Location ---
+import { nanoid } from 'nanoid'
+import { locationSchema, type Location } from './location-types'
+
+const US = 'US'
+const toNumOrNull = (s?: string) => {
+  const n = Number(s)
+  return Number.isFinite(n) ? n : null
+}
+
+/** Map a Google Business Profiles CSV row to a Location (best-effort). */
+export function googleRowToLocation(headers: string[], row: string[]): Location | null {
+  const get = (name: string) => {
+    const idx = headers.findIndex(h => h.trim().toLowerCase() === name.toLowerCase())
+    return idx >= 0 ? row[idx] ?? '' : ''
+  }
+  const l: Partial<Location> = {
+    id: get('Store code') || nanoid(),
+    name: get('Business name'),
+    address1: get('Address line 1'),
+    address2: get('Address line 2') || '',
+    city: get('Locality'),
+    state: get('Administrative area'),
+    postalCode: get('Postal code'),
+    phone: get('Primary phone'),
+    website: get('Website') || '',
+    latitude: toNumOrNull(undefined),
+    longitude: toNumOrNull(undefined),
+  }
+  const parsed = locationSchema.safeParse(l)
+  return parsed.success ? parsed.data : null
+}
+
+/** Map an Apple Business Connect CSV row to a Location (best-effort). */
+export function appleRowToLocation(headers: string[], row: string[]): Location | null {
+  const get = (name: string) => {
+    const idx = headers.findIndex(h => h.trim().toLowerCase() === name.toLowerCase())
+    return idx >= 0 ? row[idx] ?? '' : ''
+  }
+  const l: Partial<Location> = {
+    id: get('External ID') || nanoid(),
+    name: get('Location Name'),
+    address1: get('Address Line 1'),
+    address2: get('Address Line 2') || '',
+    city: get('Locality'),
+    state: get('Administrative Area'),
+    postalCode: get('Postal Code'),
+    phone: get('Phone Number'),
+    website: get('Website URL') || '',
+    latitude: toNumOrNull(undefined),
+    longitude: toNumOrNull(undefined),
+  }
+  const parsed = locationSchema.safeParse(l)
+  return parsed.success ? parsed.data : null
+}
+
+/** A minimal template row to help users format imports. */
+export function downloadImportTemplate() {
+  const headers = ['Business name','Address line 1','Address line 2','Locality','Administrative area','Postal code','Primary phone','Website','Store code']
+  const csv = toCSV(headers, [
+    ['Example Store','123 Main St','','Baltimore','MD','21201','410-555-1212','https://example.com','EX-001']
+  ])
+  downloadCsv('import-template-google-like.csv', csv)
+}
