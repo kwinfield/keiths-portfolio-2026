@@ -1,20 +1,22 @@
 // lib/csv.ts
-import type { Location } from './location-types'
+import { nanoid } from 'nanoid'
+import { locationSchema, type Location } from './location-types'
 
+/** Escape a CSV field (RFC 4180-ish) */
 function csvEscape(value: string | number | null | undefined): string {
   const s = (value ?? '').toString()
-  // Escape if contains comma, quote, or newline
-  if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`
-  return s
+  // Wrap in quotes if it contains comma, quote, or newline; escape quotes
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
 }
 
+/** Build a CSV string from headers + rows; includes BOM for Excel compatibility */
 function toCSV(headers: string[], rows: (string | number | null | undefined)[][]): string {
   const head = headers.map(csvEscape).join(',')
   const body = rows.map(r => r.map(csvEscape).join(',')).join('\n')
-  // Include BOM for Excel compatibility
-  return '\ufeff' + head + '\n' + body + '\n'
+  return '\ufeff' + head + '\n' + (body ? body + '\n' : '')
 }
 
+/** Trigger a CSV download in the browser */
 function downloadCsv(filename: string, csv: string) {
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
@@ -27,7 +29,7 @@ function downloadCsv(filename: string, csv: string) {
   URL.revokeObjectURL(url)
 }
 
-// Very light US phone “normalizer”: keep digits; prepend +1 if 10 digits
+/** Very light US phone normalizer → +1########## when possible */
 function normalizePhoneUS(raw?: string) {
   if (!raw) return ''
   const digits = raw.replace(/\D/g, '')
@@ -36,17 +38,18 @@ function normalizePhoneUS(raw?: string) {
   return raw
 }
 
-/**
- * Google Business Profiles (common import columns)
- * Ref columns kept practical for your demo. You can extend later (categories, hours, etc.)
- */
+/* =========================
+ *  EXPORTERS
+ * =======================*/
+
+/** Google Business Profiles CSV export (pragmatic column set for demo) */
 export function exportGoogleCSV(list: Location[]) {
   const headers = [
-    'Store code',            // optional internal code
+    'Store code',            // internal unique code (optional but useful)
     'Business name',
     'Address line 1',
     'Address line 2',
-    'Sub-locality',          // empty
+    'Sub-locality',          // left blank in demo
     'Locality',              // City
     'Administrative area',   // State
     'Postal code',
@@ -70,12 +73,10 @@ export function exportGoogleCSV(list: Location[]) {
   ]))
 
   const csv = toCSV(headers, rows)
-  downloadCsv(`google-business-profiles.csv`, csv)
+  downloadCsv('google-business-profiles.csv', csv)
 }
 
-/**
- * Apple Business Connect (pragmatic minimal set for demo)
- */
+/** Apple Business Connect CSV export (pragmatic column set for demo) */
 export function exportAppleCSV(list: Location[]) {
   const headers = [
     'Location Name',
@@ -104,23 +105,26 @@ export function exportAppleCSV(list: Location[]) {
   ]))
 
   const csv = toCSV(headers, rows)
-  downloadCsv(`apple-business-connect.csv`, csv)
+  downloadCsv('apple-business-connect.csv', csv)
 }
 
-// --- beneath exportAppleCSV(...) ---
+/* =========================
+ *  PARSERS
+ * =======================*/
 
+/** Minimal CSV parser that supports quotes, escaped quotes, and newlines */
 export function parseCSV(raw: string): string[][] {
   const rows: string[][] = []
   let i = 0, field = '', row: string[] = [], inQuotes = false
 
-  function endField() { row.push(field); field = '' }
-  function endRow() { rows.push(row); row = [] }
+  const endField = () => { row.push(field); field = '' }
+  const endRow = () => { rows.push(row); row = [] }
 
   while (i < raw.length) {
     const c = raw[i]
     if (inQuotes) {
       if (c === '"') {
-        if (raw[i+1] === '"') { field += '"'; i += 2; continue } // escaped quote
+        if (raw[i + 1] === '"') { field += '"'; i += 2; continue } // escaped quote
         inQuotes = false; i++; continue
       }
       field += c; i++; continue
@@ -132,10 +136,11 @@ export function parseCSV(raw: string): string[][] {
       field += c; i++; continue
     }
   }
-  // tail
+  // finalize last field/row
   endField(); endRow()
-  // trim BOM
-  if (rows[0] && rows[0][0] && rows[0][0].charCodeAt(0) === 0xFEFF) {
+
+  // Trim BOM on first cell if present
+  if (rows[0]?.[0] && rows[0][0].charCodeAt(0) === 0xFEFF) {
     rows[0][0] = rows[0][0].slice(1)
   }
   return rows
@@ -143,38 +148,41 @@ export function parseCSV(raw: string): string[][] {
 
 export type ParsedCsv = { headers: string[], rows: string[][] }
 
+/** Parse CSV and split into headers + rows (skips empty rows) */
 export function parseCsvWithHeader(raw: string): ParsedCsv {
   const all = parseCSV(raw)
-  const [head, ...body] = all.filter(r => r.length && r.some(v => v !== ''))
-  return { headers: head ?? [], rows: body }
+  const filtered = all.filter(r => r.length && r.some(v => (v ?? '') !== ''))
+  const [headers = [], ...rows] = filtered
+  return { headers, rows }
 }
 
-// --- MAPPERS: CSV -> Location ---
-import { nanoid } from 'nanoid'
-import { locationSchema, type Location } from './location-types'
+/* =========================
+ *  MAPPERS (CSV → Location)
+ * =======================*/
 
-const US = 'US'
 const toNumOrNull = (s?: string) => {
   const n = Number(s)
   return Number.isFinite(n) ? n : null
 }
 
-/** Map a Google Business Profiles CSV row to a Location (best-effort). */
+/** Helper: read a header by (case-insensitive) name */
+function getByHeader(headers: string[], row: string[], name: string) {
+  const idx = headers.findIndex(h => h.trim().toLowerCase() === name.toLowerCase())
+  return idx >= 0 ? (row[idx] ?? '') : ''
+}
+
+/** Map a Google Business Profiles CSV row to a Location (best-effort) */
 export function googleRowToLocation(headers: string[], row: string[]): Location | null {
-  const get = (name: string) => {
-    const idx = headers.findIndex(h => h.trim().toLowerCase() === name.toLowerCase())
-    return idx >= 0 ? row[idx] ?? '' : ''
-  }
   const l: Partial<Location> = {
-    id: get('Store code') || nanoid(),
-    name: get('Business name'),
-    address1: get('Address line 1'),
-    address2: get('Address line 2') || '',
-    city: get('Locality'),
-    state: get('Administrative area'),
-    postalCode: get('Postal code'),
-    phone: get('Primary phone'),
-    website: get('Website') || '',
+    id: getByHeader(headers, row, 'Store code') || nanoid(),
+    name: getByHeader(headers, row, 'Business name'),
+    address1: getByHeader(headers, row, 'Address line 1'),
+    address2: getByHeader(headers, row, 'Address line 2') || '',
+    city: getByHeader(headers, row, 'Locality'),
+    state: getByHeader(headers, row, 'Administrative area'),
+    postalCode: getByHeader(headers, row, 'Postal code'),
+    phone: getByHeader(headers, row, 'Primary phone'),
+    website: getByHeader(headers, row, 'Website') || '',
     latitude: toNumOrNull(undefined),
     longitude: toNumOrNull(undefined),
   }
@@ -182,22 +190,18 @@ export function googleRowToLocation(headers: string[], row: string[]): Location 
   return parsed.success ? parsed.data : null
 }
 
-/** Map an Apple Business Connect CSV row to a Location (best-effort). */
+/** Map an Apple Business Connect CSV row to a Location (best-effort) */
 export function appleRowToLocation(headers: string[], row: string[]): Location | null {
-  const get = (name: string) => {
-    const idx = headers.findIndex(h => h.trim().toLowerCase() === name.toLowerCase())
-    return idx >= 0 ? row[idx] ?? '' : ''
-  }
   const l: Partial<Location> = {
-    id: get('External ID') || nanoid(),
-    name: get('Location Name'),
-    address1: get('Address Line 1'),
-    address2: get('Address Line 2') || '',
-    city: get('Locality'),
-    state: get('Administrative Area'),
-    postalCode: get('Postal Code'),
-    phone: get('Phone Number'),
-    website: get('Website URL') || '',
+    id: getByHeader(headers, row, 'External ID') || nanoid(),
+    name: getByHeader(headers, row, 'Location Name'),
+    address1: getByHeader(headers, row, 'Address Line 1'),
+    address2: getByHeader(headers, row, 'Address Line 2') || '',
+    city: getByHeader(headers, row, 'Locality'),
+    state: getByHeader(headers, row, 'Administrative Area'),
+    postalCode: getByHeader(headers, row, 'Postal Code'),
+    phone: getByHeader(headers, row, 'Phone Number'),
+    website: getByHeader(headers, row, 'Website URL') || '',
     latitude: toNumOrNull(undefined),
     longitude: toNumOrNull(undefined),
   }
@@ -205,11 +209,26 @@ export function appleRowToLocation(headers: string[], row: string[]): Location |
   return parsed.success ? parsed.data : null
 }
 
-/** A minimal template row to help users format imports. */
+/* =========================
+ *  TEMPLATES
+ * =======================*/
+
+/** A simple “Google-like” import template to help users format CSVs */
 export function downloadImportTemplate() {
-  const headers = ['Business name','Address line 1','Address line 2','Locality','Administrative area','Postal code','Primary phone','Website','Store code']
-  const csv = toCSV(headers, [
-    ['Example Store','123 Main St','','Baltimore','MD','21201','410-555-1212','https://example.com','EX-001']
-  ])
+  const headers = [
+    'Business name',
+    'Address line 1',
+    'Address line 2',
+    'Locality',
+    'Administrative area',
+    'Postal code',
+    'Primary phone',
+    'Website',
+    'Store code'
+  ]
+  const rows = [
+    ['Example Store', '123 Main St', '', 'Baltimore', 'MD', '21201', '410-555-1212', 'https://example.com', 'EX-001']
+  ]
+  const csv = toCSV(headers, rows)
   downloadCsv('import-template-google-like.csv', csv)
 }
