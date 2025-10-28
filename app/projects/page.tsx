@@ -11,7 +11,7 @@ type ProjectItem = {
 export default function ProjectsPage() {
   const items: ProjectItem[] = [
     { title: 'CMS Performance & Accessibility', summary: 'Drupal/WP, CWV + A11y improvements', link: '/projects/cms-hardening', tags: ['Drupal','WordPress','A11y'] },
-    { title: 'Maps Sync (300+ Locations)', summary: 'Google/Apple Maps bulk sync admin + CSV export', link: '/projects/locations', tags: ['Locations','Ops'] },
+    { title: 'Maps Sync (300+ Locations)', summary: 'Google/Apple Maps bulk sync admin + CSV import/export', link: '/projects/maps-sync', tags: ['Locations','Ops'] },
     { title: 'Mailchimp + UTM Dashboard', summary: 'Automation and analytics pipeline', link: '#', tags: ['Mailchimp','Supabase','Next.js'] },
     { title: 'Headless Catalog Viewer', summary: 'Next.js product browsing UX', link: '#', tags: ['Next.js','Search','UI'] },
   ]
