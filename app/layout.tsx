@@ -20,6 +20,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={`${inter.variable} font-sans`}>
+        <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 bg-brand text-white px-3 py-2 rounded">
+          Skip to content
+        </a>
         <ThemeProvider>
           <SiteHeader />
           <main className="container py-8">{children}</main>

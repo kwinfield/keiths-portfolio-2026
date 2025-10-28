@@ -34,4 +34,5 @@ body { background-color: #fff; }
 }
 .prose :where(a){ text-decoration: underline; }
 
+:focus-visible { outline: 2px solid #4f46e5; outline-offset: 2px; }
 
