@@ -21,27 +21,43 @@ function AutomationInner() {
     setLeads(loadLeads())
   }, [searchParams])
 
-  function submit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!email.includes('@')) { setStatus('error'); return }
-    setStatus('saving')
-    gtag.event({ action: 'lead_submit', category: 'leads', label: utm.campaign })
+  async function submit(e: React.FormEvent) {
+  e.preventDefault()
+  if (!email.includes('@')) { setStatus('error'); return }
+  setStatus('saving')
+  gtag.event({ action: 'lead_submit', category: 'leads', label: utm.campaign })
 
-    const row: LeadRow = {
-      id: nanoid(),
-      email: email.trim(),
-      name: name.trim() || undefined,
-      createdAt: new Date().toISOString(),
-      utm
-    }
-    const next = [row, ...leads]
-    setLeads(next)
-    saveLeads(next)
-
-    setStatus('saved')
-    gtag.event({ action: 'lead_success', category: 'leads', label: utm.campaign })
-    setEmail(''); setName('')
+  // Save locally for demo table (unchanged)
+  const row: LeadRow = {
+    id: nanoid(),
+    email: email.trim(),
+    name: name.trim() || undefined,
+    createdAt: new Date().toISOString(),
+    utm
   }
+  const next = [row, ...leads]
+  setLeads(next)
+  saveLeads(next)
+
+  // NEW: call Mailchimp API route (best-effort; do not block UX on failure)
+  try {
+    const res = await fetch('/api/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, name, utm })
+    })
+    const data = await res.json()
+    if (!data?.ok) {
+      console.warn('Mailchimp error:', data)
+    }
+  } catch (err) {
+    console.warn('Mailchimp network error', err)
+  }
+
+  setStatus('saved')
+  gtag.event({ action: 'lead_success', category: 'leads', label: utm.campaign })
+  setEmail(''); setName('')
+}
 
   const filtered = useMemo(() => {
     const q = filter.toLowerCase().trim()
@@ -58,6 +74,8 @@ function AutomationInner() {
     </div>
   )
 }
+
+
 
 export default function AutomationDemo() {
   return (
