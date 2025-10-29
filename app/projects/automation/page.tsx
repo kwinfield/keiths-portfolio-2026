@@ -6,6 +6,8 @@ import { nanoid } from 'nanoid'
 import { readUTMFromUrl, type UTM, loadLeads, saveLeads, type LeadRow } from '@/lib/utm'
 import { exportLeadsCSV } from '@/lib/csv'
 import * as gtag from '@/lib/gtag'
+import LeadsByCampaign from '@/components/charts/leads-by-campaign'
+
 
 function AutomationInner() {
   const searchParams = useSearchParams()
@@ -161,6 +163,14 @@ function AutomationInner() {
           </tbody>
         </table>
       </section>
+      <section className="rounded-2xl border">
+        <header className="flex items-center justify-between p-4">
+          <h2 className="font-semibold">Leads by Campaign</h2>
+          <p className="text-sm text-zinc-500">Last {leads.length} events (local demo data)</p>
+        </header>
+        <LeadsByCampaign rows={leads} />
+      </section>
+
     </div>
   )
 }
