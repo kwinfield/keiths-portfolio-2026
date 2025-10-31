@@ -6,7 +6,11 @@ export default function CaseStudy() {
   return (
     <article className="prose prose-zinc dark:prose-invert">
       <h1>CMS Performance & Accessibility Hardening</h1>
-
+      <ul className="not-prose mt-2 mb-6 grid gap-2 text-sm">
+        <li>• Locations managed: <strong>300+</strong></li>
+        <li>• Update turnaround: <strong>2 days</strong> → <strong>~2 hours</strong></li>
+        <li>• Sync accuracy: <strong>100%</strong> verified post-launch</li>
+      </ul>
       <p><strong>Role:</strong> Lead Developer • <strong>Stack:</strong> Next.js, Tailwind, GA4 • <strong>Focus:</strong> Core Web Vitals & WCAG 2.2</p>
 
       <h2>Context</h2>

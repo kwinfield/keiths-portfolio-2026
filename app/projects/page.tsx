@@ -3,17 +3,31 @@ import Link from 'next/link'
 
 type ProjectItem = {
   title: string
-  summary: string
+  description: string
   link: string
   tags?: string[]
 }
 
 export default function ProjectsPage() {
   const items: ProjectItem[] = [
-    { title: 'CMS Performance & Accessibility', summary: 'Drupal/WP, CWV + A11y improvements', link: '/projects/cms-hardening', tags: ['Drupal','WordPress','A11y'] },
-    { title: 'Maps Sync (300+ Locations)', summary: 'Google/Apple Maps bulk sync admin + CSV import/export', link: '/projects/maps-sync', tags: ['Locations','Ops'] },
-    { title: 'Mailchimp + UTM Dashboard', summary: 'UTM capture, GA4 events, Mailchimp subscribe, CSV + chart', link: '/projects/automation/case-study', tags: ['Mailchimp','GA4','UTM'] },
-    { title: 'Headless Catalog Viewer', summary: 'Next.js product browsing UX', link: '#', tags: ['Next.js','Search','UI'] },
+{
+    title: "CMS Performance & Accessibility Hardening",
+    description:
+      "Improved Drupal/WordPress site performance to 95+ Lighthouse scores and achieved WCAG 2.2 AA compliance.",
+    link: "/projects/cms-hardening",
+  },
+  {
+    title: "Maps Sync (Google & Apple)",
+    description:
+      "Automated management of 300+ store locations across Google and Apple Maps, ensuring consistent and accurate listings.",
+    link: "/projects/maps-sync",
+  },
+  {
+    title: "Mailchimp + UTM Dashboard Automation",
+    description:
+      "Built a cross-channel automation pipeline connecting Mailchimp campaigns, UTM tracking, and GA4 reports.",
+    link: "/projects/automation/case-study",
+  },
   ]
 
   return (
@@ -23,7 +37,7 @@ export default function ProjectsPage() {
         {items.map((p) => (
           <div key={p.title} className="rounded-2xl border bg-white dark:bg-zinc-900 shadow-soft p-5">
             <h2 className="text-lg font-semibold">{p.title}</h2>
-            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{p.summary}</p>
+            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{p.description}</p>
             {p.tags && (
               <div className="mt-3 flex flex-wrap gap-2">
                 {p.tags.map(t => <span key={t} className="rounded-full bg-zinc-100 dark:bg-zinc-800 px-3 py-1 text-xs">{t}</span>)}

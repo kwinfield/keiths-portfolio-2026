@@ -10,6 +10,12 @@ export default function AutomationCaseStudy() {
   return (
     <article className="prose prose-zinc dark:prose-invert max-w-none">
       <h1>Mailchimp + UTM Dashboard</h1>
+      <ul className="not-prose mt-2 mb-6 grid gap-2 text-sm">
+        <li>• Campaigns instrumented: <strong>40+</strong></li>
+        <li>• UTM tagging time: <strong>30 min</strong> → <strong>~5 min</strong> per campaign</li>
+        <li>• Attribution accuracy: <strong>+60%</strong> (GA4)</li>
+      </ul>
+
       <p>
         <strong>Role:</strong> Developer • <strong>Stack:</strong> Next.js, TypeScript, Tailwind, GA4, Mailchimp API, Recharts
       </p>
