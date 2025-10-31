@@ -2,7 +2,7 @@
 import Link from 'next/link'
 
 export const metadata = {
-  title: 'Resume — Keejay',
+  title: 'Resume — Keith Winfield',
   description: 'Downloadable resume and quick highlights.',
 }
 
