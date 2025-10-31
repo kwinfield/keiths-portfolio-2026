@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import Link from 'next/link'
 
 export const metadata = {
   title: 'Maps Sync — Google & Apple CSV Admin (Case Study)',
@@ -10,6 +11,25 @@ export default function MapsSyncCaseStudy() {
   return (
     <article className="prose prose-zinc dark:prose-invert max-w-none">
       <h1>Maps Sync — Google &amp; Apple CSV Admin</h1>
+      <ul className="not-prose mt-2 mb-6 grid gap-2 text-sm">
+        <li>• Locations managed: <strong>300+</strong></li>
+        <li>• Update turnaround: <strong>2 days</strong> → <strong>~2 hours</strong></li>
+        <li>• Sync accuracy: <strong>100%</strong> verified post-launch</li>
+      </ul>
+      <div className="not-prose flex gap-3">
+        <Link
+          href="/projects/locations"
+          className="inline-block rounded-2xl bg-brand px-4 py-2 text-white"
+        >
+          Try the Demo
+        </Link>
+        <Link
+          href="/projects"
+          className="inline-block rounded-2xl border px-4 py-2"
+        >
+          ← Back to Projects
+        </Link>
+      </div>
       <p>
         <strong>Role:</strong> Lead Developer · <strong>Stack:</strong> Next.js, TypeScript, Tailwind, Zod ·
         <strong> Focus:</strong> Data quality, import/export reliability, operator speed

@@ -36,12 +36,20 @@ export default function AutomationCaseStudy() {
       </ul>
 
       <h2>Live demo</h2>
-      <p>
-        Try it with UTMs: {' '}
-        <Link href="/projects/automation?utm_source=linkedin&utm_medium=cpc&utm_campaign=portfolio" className="underline">
-          Automation Demo
+      <div className="not-prose flex gap-3 mb-4">
+        <Link
+          href="/projects/automation?utm_source=portfolio&utm_medium=site&utm_campaign=case-study"
+          className="inline-block rounded-2xl bg-brand px-4 py-2 text-white"
+        >
+          Open Automation Demo
         </Link>
-      </p>
+        <Link
+          href="/projects"
+          className="inline-block rounded-2xl border px-4 py-2"
+        >
+          ← Back to Projects
+        </Link>
+      </div>
 
       <h2>Impact</h2>
       <ul>

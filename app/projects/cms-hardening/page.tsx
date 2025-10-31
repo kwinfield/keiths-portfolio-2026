@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import Link from 'next/link'
 
 export const metadata = { title: 'CMS Performance & Accessibility Hardening — Case Study' }
 
@@ -11,6 +12,14 @@ export default function CaseStudy() {
         <li>• Update turnaround: <strong>2 days</strong> → <strong>~2 hours</strong></li>
         <li>• Sync accuracy: <strong>100%</strong> verified post-launch</li>
       </ul>
+      <p className="not-prose">
+        <Link
+            href="/projects"
+            className="inline-block rounded-2xl bg-brand px-4 py-2 text-white"
+          >
+            ← Back to Projects
+        </Link>
+      </p>
       <p><strong>Role:</strong> Lead Developer • <strong>Stack:</strong> Next.js, Tailwind, GA4 • <strong>Focus:</strong> Core Web Vitals & WCAG 2.2</p>
 
       <h2>Context</h2>
